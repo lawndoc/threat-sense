@@ -1,0 +1,117 @@
+name: Build, Tag, and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - .gitignore
+      - LICENSE
+      - README.md
+      - tests/**
+      - resources/**
+      - .github/workflows/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-tag-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Get next version
+        id: version
+        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8 # 1.75.0
+        env:
+          WITH_V: true
+          DEFAULT_BUMP: patch
+          DRY_RUN: true
+
+      - name: Check if version changed
+        id: changed
+        run: |
+          if [[ "${{ steps.version.outputs.new_tag }}" == "${{ steps.version.outputs.old_tag }}" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Version not changed"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version changed to ${{ steps.version.outputs.new_tag }}"
+          fi
+
+      - name: Update manifest version
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        run: |
+          version="${{ steps.version.outputs.new_tag }}"
+          clean_version="${version#v}"
+          node -e "const fs=require('fs');const p='src/manifest.json';const m=JSON.parse(fs.readFileSync(p,'utf8'));m.version=process.argv[1];fs.writeFileSync(p, JSON.stringify(m,null,2)+'\\n');" "$clean_version"
+
+      - name: Push version tag
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8 # 1.75.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CUSTOM_TAG: ${{ steps.version.outputs.new_tag }}
+
+      - name: Build ZIP package
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        run: |
+          version="${{ steps.version.outputs.new_tag }}"
+          clean_version="${version#v}"
+          mkdir -p dist
+          (cd src && zip -r "../dist/scamshield-${clean_version}.zip" .)
+          cp src/manifest.json "dist/manifest.json"
+
+      - name: Build signed CRX package
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        env:
+          CRX_PRIVATE_KEY_PEM_B64: ${{ secrets.CRX_PRIVATE_KEY_PEM_B64 || '' }}
+        run: |
+          if [[ -z "$CRX_PRIVATE_KEY_PEM_B64" ]]; then
+            echo "::error::Missing required secret CRX_PRIVATE_KEY_PEM_B64"
+            exit 1
+          fi
+
+          version="${{ steps.version.outputs.new_tag }}"
+          clean_version="${version#v}"
+
+          printf '%s' "$CRX_PRIVATE_KEY_PEM_B64" | base64 --decode > "$RUNNER_TEMP/scamshield.pem"
+          chmod 600 "$RUNNER_TEMP/scamshield.pem"
+
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium || true)"
+          if [[ -z "$CHROME_BIN" ]]; then
+            echo "::error::Chrome or Chromium binary not found on runner"
+            exit 1
+          fi
+
+          "$CHROME_BIN" --no-message-box --pack-extension="$PWD/src" --pack-extension-key="$RUNNER_TEMP/scamshield.pem"
+          mv "$PWD/src.crx" "$PWD/dist/scamshield-${clean_version}.crx"
+
+      - name: Upload release artifacts
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.0
+        with:
+          name: release-artifacts-${{ steps.version.outputs.new_tag }}
+          path: dist/*
+
+      - name: Create or update GitHub Release
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
+        with:
+          allowUpdates: true
+          updateOnlyUnreleased: true
+          generateReleaseNotes: true
+          artifacts: "dist/scamshield-*.zip,dist/scamshield-*.crx,dist/manifest.json"
+          tag: ${{ steps.version.outputs.new_tag }}
