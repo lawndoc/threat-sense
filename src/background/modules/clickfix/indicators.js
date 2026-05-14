@@ -19,7 +19,7 @@
 export const CLICKFIX_INDICATORS = [
   // ── PowerShell download-and-execute ─────────────────────────────────────
   {
-    pattern: /powershell[^\n]{0,300}(iex|invoke-expression|downloadstring|net\.webclient|downloadfile|start-bitstransfer)/i,
+    pattern: /powershell[\s\S]{0,300}(iex|invoke-expression|downloadstring|net\.webclient|downloadfile|start-bitstransfer)/i,
     label: 'PowerShell download-execute',
     category: 'execution',
     confidence: 'high',
@@ -59,7 +59,7 @@ export const CLICKFIX_INDICATORS = [
 
   // ── curl / wget / Invoke-WebRequest pipe-to-execute ──────────────────────
   {
-    pattern: /(curl|wget|iwr|invoke-webrequest)[^\n]{0,200}(iex|invoke-expression|\|\s*powershell)/i,
+    pattern: /(curl|wget|iwr|invoke-webrequest)[\s\S]{0,200}(iex|invoke-expression|\|\s*powershell)/i,
     label: 'Download pipe-execute',
     category: 'execution',
     confidence: 'high',
@@ -67,7 +67,7 @@ export const CLICKFIX_INDICATORS = [
 
   // ── Start-Process launching remote or script resources ───────────────────
   {
-    pattern: /Start-Process[^\n]{0,150}(https?:\/\/|\.exe|\.bat|\.cmd|\.ps1|\.vbs)/i,
+    pattern: /Start-Process[\s\S]{0,150}(https?:\/\/|\.exe|\.bat|\.cmd|\.ps1|\.vbs)/i,
     label: 'Start-Process remote launch',
     category: 'execution',
     confidence: 'high',
@@ -75,7 +75,7 @@ export const CLICKFIX_INDICATORS = [
 
   // ── regsvr32 scriptlet / COM object abuse ────────────────────────────────
   {
-    pattern: /regsvr32[^\n]{0,150}(\/s|\/u|\/i:|scrobj\.dll)/i,
+    pattern: /regsvr32[\s\S]{0,150}(\/s|\/u|\/i:|scrobj\.dll)/i,
     label: 'regsvr32 scriptlet execution',
     category: 'execution',
     confidence: 'high',
@@ -83,7 +83,7 @@ export const CLICKFIX_INDICATORS = [
 
   // ── rundll32 JavaScript / remote payload ─────────────────────────────────
   {
-    pattern: /rundll32[^\n]{0,150}(javascript:|https?:\/\/|\\\\)/i,
+    pattern: /rundll32[\s\S]{0,150}(javascript:|https?:\/\/|\\\\)/i,
     label: 'rundll32 remote execution',
     category: 'execution',
     confidence: 'high',
