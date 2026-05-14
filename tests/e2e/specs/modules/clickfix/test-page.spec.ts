@@ -1,0 +1,81 @@
+import { test, expect } from '../../../fixtures';
+
+test.describe('ClickFix - Test Page Functionality', () => {
+  test('should load test page successfully', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+
+    const title = await page.title();
+    expect(title).toContain('ScamShield');
+    expect(title).toContain('ClickFix');
+  });
+
+  test('should display all test scenarios', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Verify benign control section
+    await expect(page.locator('[data-payload="p-benign"]')).toBeVisible();
+
+    // Verify high confidence detections
+    await expect(page.locator('[data-payload="p-powershell"]')).toBeVisible();
+    await expect(page.locator('[data-payload="p-mshta"]')).toBeVisible();
+    await expect(page.locator('[data-payload="p-rundll-js"]')).toBeVisible();
+    await expect(page.locator('[data-payload="p-regsvr"]')).toBeVisible();
+    await expect(page.locator('[data-payload="p-cmd"]')).toBeVisible();
+  });
+
+  test('should display badges correctly', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Verify benign badge
+    await expect(page.locator('.badge-none')).toBeVisible();
+
+    // Verify high-confidence badge
+    const highBadges = await page.locator('.badge-high').all();
+    expect(highBadges.length).toBeGreaterThan(0);
+  });
+
+  test('should display payload code blocks', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    const codeBlocks = await page.locator('code').all();
+    expect(codeBlocks.length).toBeGreaterThan(0);
+
+    // Verify specific payloads are present
+    const pageContent = await page.content();
+    expect(pageContent).toContain('powershell');
+    expect(pageContent).toContain('mshta');
+    expect(pageContent).toContain('rundll32');
+  });
+});
+
+test.describe('ClickFix - Copy Button Interactions', () => {
+  test('should handle copy button clicks', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Get initial button count
+    const buttons = await page.locator('button.copy-btn').all();
+    expect(buttons.length).toBeGreaterThan(0);
+
+    // Click first button and verify no errors
+    await page.click('button.copy-btn:first-of-type');
+    await page.waitForTimeout(100);
+
+    // Page should still be responsive
+    expect(page.url()).toContain('clickfix-test-page.html');
+  });
+
+  test('should display toast notification on copy', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Click copy button
+    await page.click('button.copy-btn:first-of-type');
+
+    // Check for toast element
+    await expect(page.locator('#toast')).toBeVisible();
+  });
+});

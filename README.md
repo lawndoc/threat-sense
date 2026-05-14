@@ -77,21 +77,28 @@ Once installed, ScamShield works automatically:
 
 - Chrome/Chromium browser
 - Basic knowledge of Chrome extension development
+- Node.js lts (for running automated tests)
 
 ### Testing
 
-Test pages are provided in the `tests/` directory:
+ScamShield includes comprehensive automated tests:
 
-```text
-tests/
-└── clickfix-test-page.html  # Test page for clipboard-based attack scenarios
+**Unit Tests** (Jest): Test detection logic in isolation
+```bash
+npm test
 ```
 
-Open these test pages in Chrome with the extension installed to verify detection and warning capabilities.
+**Integration Tests** (Playwright): Test the full extension in a browser
+```bash
+npm run test:e2e
+```
 
-### Building
+**Run all tests**:
+```bash
+npm run test:all
+```
 
-The extension is written in vanilla JavaScript and can run unpacked directly from `src`.
+See [the `tests/` directory](tests/) for detailed testing documentation.
 
 ## License
 
