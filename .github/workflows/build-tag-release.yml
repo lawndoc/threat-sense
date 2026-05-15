@@ -25,6 +25,7 @@ jobs:
       contents: write
       packages: write
       attestations: write
+      artifact-metadata: write
       id-token: write
 
     steps:
@@ -99,6 +100,32 @@ jobs:
           "$CHROME_BIN" --no-message-box --pack-extension="$PWD/src" --pack-extension-key="$RUNNER_TEMP/scamshield.pem"
           mv "$PWD/src.crx" "$PWD/dist/scamshield-${clean_version}.crx"
 
+      - name: Print SHA256 checksums
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        run: |
+          version="${{ steps.version.outputs.new_tag }}"
+          clean_version="${version#v}"
+          sha256sum \
+            "dist/scamshield-${clean_version}.zip" \
+            "dist/scamshield-${clean_version}.crx" \
+            "dist/manifest.json"
+
+      - name: Generate build provenance attestation
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        id: attest
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/scamshield-*.zip
+            dist/scamshield-*.crx
+
+      - name: Export attestation bundle for release
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        run: |
+          version="${{ steps.version.outputs.new_tag }}"
+          clean_version="${version#v}"
+          cp "${{ steps.attest.outputs.bundle-path }}" "dist/scamshield-${clean_version}.intoto.jsonl"
+
       - name: Upload release artifacts
         if: ${{ steps.changed.outputs.changed == 'true' }}
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.0
@@ -113,5 +140,5 @@ jobs:
           allowUpdates: true
           updateOnlyUnreleased: true
           generateReleaseNotes: true
-          artifacts: "dist/scamshield-*.zip,dist/scamshield-*.crx,dist/manifest.json"
+          artifacts: "dist/scamshield-*.zip,dist/scamshield-*.crx,dist/manifest.json,dist/scamshield-*.intoto.jsonl"
           tag: ${{ steps.version.outputs.new_tag }}
