@@ -1,6 +1,6 @@
-# ScamShield
+# Scam Sense
 
-ScamShield protects users from various scams and attacks from malicious or hijacked websites. When detected, the extension displays a warning overlay that persists until the user confirms they understand the risks.
+Scam Sense protects users from various scams and attacks from malicious or hijacked websites. When detected, the extension displays a warning overlay that persists until the user confirms they understand the risks.
 
 ![fake captcha warning](resources/fake-captcha.png)
 
