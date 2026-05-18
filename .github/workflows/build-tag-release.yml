@@ -72,7 +72,7 @@ jobs:
           version="${{ steps.version.outputs.new_tag }}"
           clean_version="${version#v}"
           mkdir -p dist
-          (cd src && zip -r "../dist/scamshield-${clean_version}.zip" .)
+          (cd src && zip -r "../dist/threat-sense-${clean_version}.zip" .)
           cp src/manifest.json "dist/manifest.json"
 
       - name: Build signed CRX package
@@ -88,8 +88,8 @@ jobs:
           version="${{ steps.version.outputs.new_tag }}"
           clean_version="${version#v}"
 
-          printf '%s' "$CRX_PRIVATE_KEY_PEM_B64" | base64 --decode > "$RUNNER_TEMP/scamshield.pem"
-          chmod 600 "$RUNNER_TEMP/scamshield.pem"
+          printf '%s' "$CRX_PRIVATE_KEY_PEM_B64" | base64 --decode > "$RUNNER_TEMP/threat-sense.pem"
+          chmod 600 "$RUNNER_TEMP/threat-sense.pem"
 
           CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium || true)"
           if [[ -z "$CHROME_BIN" ]]; then
@@ -97,8 +97,8 @@ jobs:
             exit 1
           fi
 
-          "$CHROME_BIN" --no-message-box --pack-extension="$PWD/src" --pack-extension-key="$RUNNER_TEMP/scamshield.pem"
-          mv "$PWD/src.crx" "$PWD/dist/scamshield-${clean_version}.crx"
+          "$CHROME_BIN" --no-message-box --pack-extension="$PWD/src" --pack-extension-key="$RUNNER_TEMP/threat-sense.pem"
+          mv "$PWD/src.crx" "$PWD/dist/threat-sense-${clean_version}.crx"
 
       - name: Print SHA256 checksums
         if: ${{ steps.changed.outputs.changed == 'true' }}
@@ -106,8 +106,8 @@ jobs:
           version="${{ steps.version.outputs.new_tag }}"
           clean_version="${version#v}"
           sha256sum \
-            "dist/scamshield-${clean_version}.zip" \
-            "dist/scamshield-${clean_version}.crx" \
+            "dist/threat-sense-${clean_version}.zip" \
+            "dist/threat-sense-${clean_version}.crx" \
             "dist/manifest.json"
 
       - name: Generate build provenance attestation
@@ -116,15 +116,15 @@ jobs:
         uses: actions/attest@v4
         with:
           subject-path: |
-            dist/scamshield-*.zip
-            dist/scamshield-*.crx
+            dist/threat-sense-*.zip
+            dist/threat-sense-*.crx
 
       - name: Export attestation bundle for release
         if: ${{ steps.changed.outputs.changed == 'true' }}
         run: |
           version="${{ steps.version.outputs.new_tag }}"
           clean_version="${version#v}"
-          cp "${{ steps.attest.outputs.bundle-path }}" "dist/scamshield-${clean_version}.intoto.jsonl"
+          cp "${{ steps.attest.outputs.bundle-path }}" "dist/threat-sense-${clean_version}.intoto.jsonl"
 
       - name: Upload release artifacts
         if: ${{ steps.changed.outputs.changed == 'true' }}
@@ -140,5 +140,5 @@ jobs:
           allowUpdates: true
           updateOnlyUnreleased: true
           generateReleaseNotes: true
-          artifacts: "dist/scamshield-*.zip,dist/scamshield-*.crx,dist/manifest.json,dist/scamshield-*.intoto.jsonl"
+          artifacts: "dist/threat-sense-*.zip,dist/threat-sense-*.crx,dist/manifest.json,dist/threat-sense-*.intoto.jsonl"
           tag: ${{ steps.version.outputs.new_tag }}

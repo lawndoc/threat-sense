@@ -114,7 +114,7 @@ describe('ClickFix Detector', () => {
     });
 
     test('allows benign URLs', () => {
-      const payload = 'https://github.com/lawndoc/ScamShield';
+      const payload = 'https://github.com/lawndoc/Threat Sense';
       const result = analyzeClipboard(payload);
 
       expect(result.status).toBe('not-detected');
@@ -122,7 +122,7 @@ describe('ClickFix Detector', () => {
     });
 
     test('allows benign file paths', () => {
-      const payload = 'C:\\Users\\Documents\\projects\\scamshield\\src';
+      const payload = 'C:\\Users\\Documents\\projects\\threat-sense\\src';
       const result = analyzeClipboard(payload);
 
       expect(result.status).toBe('not-detected');

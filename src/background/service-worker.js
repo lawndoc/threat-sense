@@ -1,5 +1,5 @@
 /**
- * Service Worker — ScamShield extension background entry point.
+ * Service Worker — Threat Sense extension background entry point.
  *
  * Responsibilities:
  *  1. Initialize the module registry with the ClickFix security module.
@@ -25,14 +25,14 @@ registry.registerModule(clickfixModule);
 
 (async () => {
   await registry.initializeModules(eventBus);
-  console.log('[ScamShield] Service worker ready. Modules:', registry.listModules());
+  console.log('[Threat Sense] Service worker ready. Modules:', registry.listModules());
 })();
 
 // ── Message handler (popup ↔ service worker, content scripts → service worker) ─
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   handleMessage(message, sender).then(sendResponse).catch((err) => {
-    console.error('[ScamShield] Message handler error:', err);
+    console.error('[Threat Sense] Message handler error:', err);
     sendResponse({ error: err.message });
   });
   return true; // keep channel open for async response

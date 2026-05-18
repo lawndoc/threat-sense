@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "ScamShield",
+  "name": "Threat Sense",
   "version": "0.0.0",
   "description": "Detects ClickFix / ClearFake clipboard-hijack attacks and warns the user before they can paste a malicious command.",
 
@@ -35,7 +35,7 @@
 
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "ScamShield",
+    "default_title": "Threat Sense",
     "default_icon": {
       "16": "icons/icon16.svg",
       "48": "icons/icon48.svg",

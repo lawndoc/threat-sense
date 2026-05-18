@@ -1,6 +1,6 @@
-# ScamShield Testing Guide
+# Threat Sense Testing Guide
 
-This document explains how to run and extend automated tests for ScamShield.
+This document explains how to run and extend automated tests for Threat Sense.
 
 ## Setup
 

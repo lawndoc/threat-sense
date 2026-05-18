@@ -5,7 +5,7 @@ test.describe('ClickFix - Test Page Functionality', () => {
     await page.goto(testPagePath);
 
     const title = await page.title();
-    expect(title).toContain('ScamShield');
+    expect(title).toContain('Threat Sense');
     expect(title).toContain('ClickFix');
   });
 

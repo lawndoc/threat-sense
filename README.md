@@ -1,6 +1,6 @@
-# Scam Sense
+# Threat Sense
 
-Scam Sense protects users from various scams and attacks from malicious or hijacked websites. When detected, the extension displays a warning overlay that persists until the user confirms they understand the risks.
+Threat Sense protects users from various scams and attacks from malicious or hijacked websites. When detected, the extension displays a warning overlay that persists until the user confirms they understand the risks.
 
 ![fake captcha warning](resources/fake-captcha.png)
 
@@ -44,8 +44,8 @@ Scam Sense protects users from various scams and attacks from malicious or hijac
 
 ### From Release
 
-1. Open [the latest release](https://github.com/lawndoc/ScamShield/releases/latest)
-2. Download scamshield-\<version>.crx
+1. Open [the latest release](https://github.com/lawndoc/Threat Sense/releases/latest)
+2. Download threat-sense-\<version>.crx
 3. Navigate to [`chrome://extensions`](chrome://extensions)
 4. Drag and drop the downloaded CRX file into the extensions page
 
@@ -59,12 +59,12 @@ Scam Sense protects users from various scams and attacks from malicious or hijac
 
 ## Usage
 
-Once installed, ScamShield works automatically:
+Once installed, Threat Sense works automatically:
 
 1. **Background Protection**: The extension monitors all web pages you visit
 2. **Threat Detection**: When a clipboard-hijacking attack is detected, a warning overlay appears
 3. **User Confirmation**: Review the warning and confirm before proceeding with the paste
-4. **Dashboard**: Click the ScamShield icon to view extension status
+4. **Dashboard**: Click the Threat Sense icon to view extension status
 
 ## Browser Support
 
@@ -81,7 +81,7 @@ Once installed, ScamShield works automatically:
 
 ### Testing
 
-ScamShield includes comprehensive automated tests:
+Threat Sense includes comprehensive automated tests:
 
 **Unit Tests** (Jest): Test detection logic in isolation
 ```bash

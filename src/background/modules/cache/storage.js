@@ -5,10 +5,10 @@
  * modules can share the same storage layer without collisions.
  *
  * Schema per entry:
- *   scamshield:<module>:<hostname> => { data: {...}, ts: <epoch ms> }
+ *   threat-sense:<module>:<hostname> => { data: {...}, ts: <epoch ms> }
  */
 
-const KEY_PREFIX = 'scamshield';
+const KEY_PREFIX = 'threat-sense';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function makeKey(moduleName, hostname) {

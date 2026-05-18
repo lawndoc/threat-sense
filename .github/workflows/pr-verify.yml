@@ -60,7 +60,7 @@ jobs:
       - name: Build extension zip
         run: |
           mkdir -p dist
-          (cd src && zip -r "../dist/scamshield-${{ github.sha }}.zip" .)
+          (cd src && zip -r "../dist/threat-sense-${{ github.sha }}.zip" .)
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

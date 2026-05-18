@@ -51,7 +51,7 @@ describe('Storage cache wrapper', () => {
     await storage.set('clickfix', 'example.com', { level: 'high' });
 
     expect(global.chrome.storage.local.set).toHaveBeenCalledWith({
-      'scamshield:clickfix:example.com': expect.objectContaining({ data: { level: 'high' } }),
+      'threat-sense:clickfix:example.com': expect.objectContaining({ data: { level: 'high' } }),
     });
 
     const value = await storage.get('clickfix', 'example.com');
@@ -62,7 +62,7 @@ describe('Storage cache wrapper', () => {
     const storage = await loadStorage();
     const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(10_000);
 
-    backingStore['scamshield:clickfix:old.com'] = {
+    backingStore['threat-sense:clickfix:old.com'] = {
       data: { stale: true },
       ts: 1_000,
     };
@@ -70,7 +70,7 @@ describe('Storage cache wrapper', () => {
     const value = await storage.get('clickfix', 'old.com', 5_000);
 
     expect(value).toBeNull();
-    expect(global.chrome.storage.local.remove).toHaveBeenCalledWith('scamshield:clickfix:old.com');
+    expect(global.chrome.storage.local.remove).toHaveBeenCalledWith('threat-sense:clickfix:old.com');
     nowSpy.mockRestore();
   });
 
@@ -78,9 +78,9 @@ describe('Storage cache wrapper', () => {
     const storage = await loadStorage();
     jest.spyOn(Date, 'now').mockReturnValue(50_000);
 
-    backingStore['scamshield:clickfix:older.com'] = { data: { id: 'older' }, ts: 20_000 };
-    backingStore['scamshield:clickfix:newer.com'] = { data: { id: 'newer' }, ts: 40_000 };
-    backingStore['scamshield:other:ignore.com'] = { data: { id: 'other' }, ts: 45_000 };
+    backingStore['threat-sense:clickfix:older.com'] = { data: { id: 'older' }, ts: 20_000 };
+    backingStore['threat-sense:clickfix:newer.com'] = { data: { id: 'newer' }, ts: 40_000 };
+    backingStore['threat-sense:other:ignore.com'] = { data: { id: 'other' }, ts: 45_000 };
 
     const items = await storage.getAll('clickfix', 40_000);
 
@@ -94,16 +94,16 @@ describe('Storage cache wrapper', () => {
   test('clearModule removes only keys in the selected module namespace', async () => {
     const storage = await loadStorage();
 
-    backingStore['scamshield:clickfix:a.com'] = { data: {}, ts: 1 };
-    backingStore['scamshield:clickfix:b.com'] = { data: {}, ts: 2 };
-    backingStore['scamshield:other:c.com'] = { data: {}, ts: 3 };
+    backingStore['threat-sense:clickfix:a.com'] = { data: {}, ts: 1 };
+    backingStore['threat-sense:clickfix:b.com'] = { data: {}, ts: 2 };
+    backingStore['threat-sense:other:c.com'] = { data: {}, ts: 3 };
 
     await storage.clearModule('clickfix');
 
     expect(global.chrome.storage.local.remove).toHaveBeenCalledWith([
-      'scamshield:clickfix:a.com',
-      'scamshield:clickfix:b.com',
+      'threat-sense:clickfix:a.com',
+      'threat-sense:clickfix:b.com',
     ]);
-    expect(backingStore['scamshield:other:c.com']).toBeDefined();
+    expect(backingStore['threat-sense:other:c.com']).toBeDefined();
   });
 });
