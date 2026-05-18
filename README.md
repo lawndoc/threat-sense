@@ -24,6 +24,8 @@ Threat Sense protects users from various scams and attacks from malicious or hij
 
 **Open Source**: Code is transparent and auditable
 
+**Verifiable Releases**: Builds are automated, signed, and have provenance attestation
+
 ### Permissions
 
 | Permission | Purpose | Justification |
