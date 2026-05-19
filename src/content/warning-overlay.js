@@ -39,7 +39,7 @@
     'display:flex',
     'align-items:flex-start',
     'justify-content:center',
-    'padding-top:24px',
+    'padding-top:32px',
     'pointer-events:none',
   ].join(';'));
 
@@ -56,34 +56,34 @@
         background: #1a1d27;
         border: 2px solid #ef4444;
         border-radius: 10px;
-        padding: 16px 20px;
-        max-width: 480px;
-        width: calc(100vw - 48px);
+        padding: 28px 34px;
+        max-width: 760px;
+        width: calc(100vw - 24px);
         box-shadow: 0 8px 32px rgba(0,0,0,0.75);
         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        font-size: 13px;
+        font-size: 16px;
         line-height: 1.5;
         color: #e2e8f0;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 18px;
       }
       .overlay__header {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         color: #ef4444;
         font-weight: 700;
-        font-size: 15px;
+        font-size: 22px;
       }
       .overlay__icon {
-        font-size: 22px;
+        font-size: 32px;
         line-height: 1;
         flex-shrink: 0;
       }
       .overlay__body {
         color: #cbd5e1;
-        font-size: 12px;
+        font-size: 15px;
       }
       .overlay__body strong {
         color: #f1f5f9;
@@ -92,13 +92,13 @@
         background: #0f1117;
         border: 1px solid #2a2d3e;
         border-radius: 4px;
-        padding: 8px 10px;
+        padding: 12px 14px;
         font-family: 'Consolas', 'Courier New', monospace;
-        font-size: 11px;
+        font-size: 13px;
         color: #f59e0b;
         word-break: break-all;
         white-space: pre-wrap;
-        max-height: 80px;
+        max-height: 132px;
         overflow: hidden;
         user-select: none;
         margin: 0;
@@ -112,8 +112,8 @@
         color: #fff;
         border: none;
         border-radius: 6px;
-        padding: 6px 18px;
-        font-size: 12px;
+        padding: 10px 24px;
+        font-size: 14px;
         font-weight: 600;
         cursor: pointer;
         transition: background 0.15s;
