@@ -88,6 +88,48 @@ export const CLICKFIX_INDICATORS = [
     category: 'execution',
     confidence: 'high',
   },
+
+  // ── bitsadmin remote download (LOLBin — T1197) ───────────────────────────
+  // Covers both one-shot (/transfer) and job-based (/addfile) download
+  // patterns observed in APT41, Cobalt Strike, and ransomware campaigns.
+  {
+    pattern: /bitsadmin[\s\S]{0,200}(\/transfer|\/addfile)[\s\S]{0,200}https?:\/\//i,
+    label: 'bitsadmin remote download',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── certutil remote download (-urlcache / -verifyctl / -URL) ─────────────
+  {
+    pattern: /certutil[\s\S]{0,150}(-urlcache|-verifyctl|-URL)[\s\S]{0,150}https?:\/\//i,
+    label: 'certutil remote download',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── certutil decode/decodehex payload staging ─────────────────────────────
+  {
+    pattern: /certutil[\s\S]{0,100}-(decode|decodehex)\b/i,
+    label: 'certutil payload decode',
+    category: 'obfuscation',
+    confidence: 'medium',
+  },
+
+  // ── msiexec remote MSI install (quiet/silent) ─────────────────────────────
+  {
+    pattern: /msiexec[\s\S]{0,150}(\/q|\/quiet|\/passive)[\s\S]{0,150}https?:\/\//i,
+    label: 'msiexec remote install',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── HTML Help remote payload (CHM/URL) ────────────────────────────────────
+  {
+    pattern: /\bhh(\.exe)?\s+https?:\/\//i,
+    label: 'hh.exe remote payload',
+    category: 'execution',
+    confidence: 'high',
+  },
 ];
 
 /**
