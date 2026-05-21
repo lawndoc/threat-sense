@@ -142,3 +142,21 @@ jobs:
           generateReleaseNotes: true
           artifacts: "dist/threat-sense-*.zip,dist/threat-sense-*.crx,dist/manifest.json,dist/threat-sense-*.intoto.jsonl"
           tag: ${{ steps.version.outputs.new_tag }}
+
+      - name: Upload CRX to Chrome Web Store
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        run: |
+          ACCESS_TOKEN=$(curl -s "https://oauth2.googleapis.com/token" -d "client_secret=$CLIENT_SECRET&grant_type=refresh_token&refresh_token=$REFRESH_TOKEN&client_id=$CLIENT_ID" | jq -r '.access_token')
+          if [[ -z "$ACCESS_TOKEN" ]]; then
+            echo "::error::Failed to obtain access token for Chrome Web Store API"
+            exit 1
+          fi
+          curl --fail-with-body -H "Authorization: Bearer $ACCESS_TOKEN" -X POST -T "dist/threat-sense-${{ steps.version.outputs.new_tag }}.crx" -v https://chromewebstore.googleapis.com/upload/v2/publishers/94601953-336e-4520-881d-25cf2d240cdb/items/flppehegjoknbjamnimelolgnogloiad:upload
+          # Does not publish immediately in case of GitHub repo compromise
+          # Requires publisher's Google FIDO2 auth to submit publication
+        env:
+          CLIENT_ID: ${{ secrets.CRX_PUBLISH_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CRX_PUBLISH_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CRX_PUBLISH_REFRESH_TOKEN }}
+          EXTENSION_ID: ${{ secrets.CRX_PUBLISH_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ secrets.CRX_PUBLISH_PUBLISHER_ID }}
