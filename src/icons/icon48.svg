@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-  <path d="M24 3L6 10.5v12C6 33 14 42 24 45c10-3 18-12 18-22.5v-12L24 3z" fill="#ef4444"/>
-  <path d="M24 10L10 15.75V22.5C10 31 17 38.75 24 41c7-2.25 14-11 14-18.5V15.75L24 10z" fill="#450a0a"/>
-  <text x="24" y="31" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444" text-anchor="middle">SS</text>
-</svg>

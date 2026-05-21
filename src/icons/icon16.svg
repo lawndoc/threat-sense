@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-  <path d="M8 1L2 3.5v4C2 11 5 14 8 15c3-1 6-4 6-7.5v-4L8 1z" fill="#ef4444"/>
-  <path d="M8 3.5L4 5.25V7.5C4 10 6 12.25 8 13c2-0.75 4-3 4-5.5V5.25L8 3.5z" fill="#450a0a"/>
-  <text x="8" y="10" font-family="monospace" font-size="5" font-weight="bold" fill="#ef4444" text-anchor="middle">SS</text>
-</svg>
