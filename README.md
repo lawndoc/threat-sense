@@ -46,7 +46,7 @@ Threat Sense protects users from various scams and attacks from malicious or hij
 
 ### From Release
 
-1. Open [the latest release](https://github.com/lawndoc/Threat Sense/releases/latest)
+1. Open [the latest release](https://github.com/lawndoc/threat-sense/releases/latest)
 2. Download threat-sense-\<version>.crx
 3. Navigate to [`chrome://extensions`](chrome://extensions)
 4. Drag and drop the downloaded CRX file into the extensions page
