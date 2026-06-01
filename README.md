@@ -42,7 +42,9 @@ Threat Sense protects users from various scams and attacks from malicious or hij
 
 ### From Chrome Web Store
 
-(Coming soon)
+One-click install from the [official Chrome Web Store listing](https://chromewebstore.google.com/detail/threat-sense/flppehegjoknbjamnimelolgnogloiad) is the safest and easiest way to install this extension.
+
+New releases on CWS require a verified upload (signed by this repo's GitHub secret) and require FIDO2 authentication from my Google account prior to publishing. This means neither my GitHub account nor my Google account can compromise the extension alone; both are needed to publish a new release.
 
 ### From Release
 
