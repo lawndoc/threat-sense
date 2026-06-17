@@ -1,0 +1,26 @@
+{
+  "name": "Threat Sense Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      },
+      "extensions": [
+        "ms-playwright.playwright",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "editorconfig.editorconfig"
+      ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  // Ensure the app's Node dependencies and Playwright browsers/dependencies are installed
+  "postCreateCommand": "npm install && npx playwright install --with-deps chromium",
+  "remoteUser": "node"
+}
