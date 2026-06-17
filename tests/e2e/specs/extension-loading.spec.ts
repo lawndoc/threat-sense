@@ -24,12 +24,11 @@ test.describe('Extension Loading and Initialization', () => {
   test('should have content scripts injected', async ({ page, testPagePath }) => {
     await page.goto(testPagePath);
 
-    // Check if content script injected functions exist
-    const contentScriptExists = await page.evaluate(() => {
-      // If clipboard interceptor is working, we should see evidence
-      return typeof window !== 'undefined';
+    // Check if the clipboard interceptor has wrapped writeText
+    const isWrapped = await page.evaluate(() => {
+      return !navigator.clipboard.writeText.toString().includes('[native code]');
     });
 
-    expect(contentScriptExists).toBe(true);
+    expect(isWrapped).toBe(true);
   });
 });

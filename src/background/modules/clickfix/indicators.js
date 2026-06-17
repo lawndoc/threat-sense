@@ -17,6 +17,22 @@
 
 /** @type {ClickFixIndicator[]} */
 export const CLICKFIX_INDICATORS = [
+  // ── CMD caret obfuscation ────────────────────────────────────────────────
+  {
+    pattern: /[a-zA-Z]\^[a-zA-Z]/,
+    label: 'CMD caret obfuscation',
+    category: 'obfuscation',
+    confidence: 'high',
+  },
+
+  // ── PowerShell backtick obfuscation ──────────────────────────────────────
+  {
+    pattern: /[a-zA-Z]`[a-zA-Z]/,
+    label: 'PowerShell backtick obfuscation',
+    category: 'obfuscation',
+    confidence: 'high',
+  },
+
   // ── PowerShell download-and-execute ─────────────────────────────────────
   {
     pattern: /powershell[\s\S]{0,300}(iex|invoke-expression|downloadstring|net\.webclient|downloadfile|start-bitstransfer)/i,
@@ -49,9 +65,9 @@ export const CLICKFIX_INDICATORS = [
     confidence: 'medium',
   },
 
-  // ── cmd /c or cmd /k ─────────────────────────────────────────────────────
+  // ── cmd /c or cmd /k (including %COMSPEC%) ────────────────────────────────
   {
-    pattern: /cmd(\.exe)?\s+(\/c|\/k)\s+.{10,}/i,
+    pattern: /(cmd(\.exe)?\s+(\/c|\/k)\s+.{10,}|%COMSPEC%\s+(\/c|\/k)\s+.{5,})/i,
     label: 'cmd /c execution',
     category: 'execution',
     confidence: 'medium',
@@ -130,6 +146,76 @@ export const CLICKFIX_INDICATORS = [
     category: 'execution',
     confidence: 'high',
   },
+
+  // ── PowerShell Clipboard execution / Get-Clipboard abuse ─────────────────
+  {
+    pattern: /(Get-Clipboard|gcb)[\s\S]{0,150}(iex|invoke-expression)/i,
+    label: 'PowerShell clipboard execution',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── PowerShell inline Base64 memory decoding ─────────────────────────────
+  {
+    pattern: /\[System\.Convert\]::FromBase64String/i,
+    label: 'PowerShell Base64 decoding',
+    category: 'obfuscation',
+    confidence: 'high',
+  },
+
+  // ── macOS clipboard pipe execution ───────────────────────────────────────
+  {
+    pattern: /pbpaste\s*\|\s*(bash|sh|zsh)/i,
+    label: 'macOS clipboard pipe execution',
+    category: 'execution',
+    confidence: 'high',
+  },
+  {
+    pattern: /eval\s+.*pbpaste/i,
+    label: 'macOS clipboard pipe execution',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── macOS AppleScript execution (osascript) ──────────────────────────────
+  {
+    pattern: /\bosascript\s+-e\s+['"].*do\s+shell\s+script.*(curl|wget|bash|sh|zsh|pbpaste)/i,
+    label: 'macOS AppleScript execution',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── Obfuscated Shell pipe-to-execute ─────────────────────────────────────
+  {
+    pattern: /(curl|wget)[\s\S]{0,200}(base64|decode|openssl|xxd)[\s\S]{0,100}\|\s*(bash|sh|zsh)/i,
+    label: 'Obfuscated pipe-execute',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── Python inline execution / base64 execution ───────────────────────────
+  {
+    pattern: /python(3)?\s+-c\s+['"].*(import\s+(urllib|requests|base64|sys|os)|exec|eval)/i,
+    label: 'Python remote/encoded execution',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── Node.js inline execution ─────────────────────────────────────────────
+  {
+    pattern: /node\s+(-e|--eval)\s+['"].*(require\s*\(\s*['"]child_process['"]\)|exec|eval)/i,
+    label: 'Node.js code execution',
+    category: 'execution',
+    confidence: 'high',
+  },
+
+  // ── Staged download-and-execute chain (e.g. curl && mshta) ───────────────
+  {
+    pattern: /(curl|wget|certutil|bitsadmin)[\s\S]{0,250}&&\s*(mshta|powershell|cmd|start|wscript|cscript|regsvr32|rundll32)/i,
+    label: 'Download chain execution',
+    category: 'execution',
+    confidence: 'high',
+  },
 ];
 
 /**
@@ -140,5 +226,16 @@ export const CLICKFIX_INDICATORS = [
  */
 export function matchIndicator(text) {
   if (!text || typeof text !== 'string') return null;
-  return CLICKFIX_INDICATORS.find((ind) => ind.pattern.test(text)) ?? null;
+
+  // 1. Run direct checks on the original text (catches raw carets/backticks first)
+  const directMatch = CLICKFIX_INDICATORS.find((ind) => ind.pattern.test(text));
+  if (directMatch) return directMatch;
+
+  // 2. Normalize/de-obfuscate by removing carets and backticks, then check again
+  const normalized = text.replace(/\^/g, '').replace(/`/g, '');
+  if (normalized !== text) {
+    return CLICKFIX_INDICATORS.find((ind) => ind.pattern.test(normalized)) ?? null;
+  }
+
+  return null;
 }

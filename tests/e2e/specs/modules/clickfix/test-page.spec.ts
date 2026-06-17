@@ -15,6 +15,8 @@ test.describe('ClickFix - Test Page Functionality', () => {
 
     // Verify benign control section
     await expect(page.locator('[data-payload="p-benign"]')).toBeVisible();
+    await expect(page.locator('[data-payload="p-whitelisted-brew"]')).toBeVisible();
+    await expect(page.locator('[data-payload="p-whitelisted-docker"]')).toBeVisible();
 
     // Verify high confidence detections
     await expect(page.locator('[data-payload="p-powershell"]')).toBeVisible();
@@ -22,6 +24,10 @@ test.describe('ClickFix - Test Page Functionality', () => {
     await expect(page.locator('[data-payload="p-rundll-js"]')).toBeVisible();
     await expect(page.locator('[data-payload="p-regsvr"]')).toBeVisible();
     await expect(page.locator('[data-payload="p-cmd"]')).toBeVisible();
+
+    // Verify new heuristics
+    await expect(page.locator('[data-payload="p-pbpaste-pipe"]')).toBeVisible();
+    await expect(page.locator('[data-payload="p-cmd-caret"]')).toBeVisible();
   });
 
   test('should display badges correctly', async ({ page, testPagePath }) => {
@@ -29,7 +35,7 @@ test.describe('ClickFix - Test Page Functionality', () => {
     await page.waitForLoadState('networkidle');
 
     // Verify benign badge
-    await expect(page.locator('.badge-none')).toBeVisible();
+    await expect(page.locator('.badge-none').first()).toBeVisible();
 
     // Verify high-confidence badge
     const highBadges = await page.locator('.badge-high').all();
@@ -60,12 +66,16 @@ test.describe('ClickFix - Copy Button Interactions', () => {
     const buttons = await page.locator('button.copy-btn').all();
     expect(buttons.length).toBeGreaterThan(0);
 
-    // Click first button and verify no errors
+    // Click the first copy button (benign text) and verify the click actually executed
     await page.click('button.copy-btn:first-of-type');
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(800);
 
-    // Page should still be responsive
-    expect(page.url()).toContain('clickfix-test-page.html');
+    // Verify the toast appeared, proving the clipboard write handler ran
+    await expect(page.locator('#toast')).toBeVisible();
+
+    // Verify the warning overlay did NOT appear for benign content
+    const warningVisible = await page.locator('#__ss-warning-overlay-host').isVisible();
+    expect(warningVisible).toBe(false);
   });
 
   test('should display toast notification on copy', async ({ page, testPagePath }) => {
