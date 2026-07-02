@@ -4,11 +4,13 @@
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 
-const $hostname      = document.getElementById('current-hostname');
-const $badge         = document.getElementById('status-badge');
-const $badgeIcon     = document.getElementById('status-icon');
-const $badgeLabel    = document.getElementById('status-label');
-const $clickfixList  = document.getElementById('clickfix-history-list');
+const $hostname = document.getElementById('current-hostname');
+const $badge = document.getElementById('status-badge');
+const $badgeIcon = document.getElementById('status-icon');
+const $badgeLabel = document.getElementById('status-label');
+const $clickfixList = document.getElementById('clickfix-history-list');
+const $version = document.getElementById('extension-version');
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -19,11 +21,25 @@ function send(type, payload = {}) {
 function timeAgo(ts) {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1)  return 'just now';
+  if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function formatHostname(hostnameOrUrl) {
+  if (!hostnameOrUrl) return 'N/A';
+  if (hostnameOrUrl.startsWith('file://')) {
+    try {
+      const url = new URL(hostnameOrUrl);
+      const filename = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+      return filename ? `file: ${filename}` : 'file: local file';
+    } catch {
+      return hostnameOrUrl;
+    }
+  }
+  return hostnameOrUrl;
 }
 
 // ── Render helpers ────────────────────────────────────────────────────────────
@@ -31,11 +47,11 @@ function timeAgo(ts) {
 function renderBadge(status) {
   if (status) {
     $badge.dataset.status = 'error';
-    $badgeIcon.textContent  = '⚠️';
+    $badgeIcon.textContent = '⚠️';
     $badgeLabel.textContent = `Threat detected on this site`;
   } else {
     $badge.dataset.status = 'unknown';
-    $badgeIcon.textContent  = '✅';
+    $badgeIcon.textContent = '✅';
     $badgeLabel.textContent = 'No threats on this site';
   }
 }
@@ -53,7 +69,7 @@ function renderClickfixHistory(entries) {
 
     const name = document.createElement('span');
     name.className = 'history__hostname';
-    name.textContent = entry.hostname;
+    name.textContent = formatHostname(entry.hostname);
     name.title = entry.hostname;
 
     const label = document.createElement('span');
@@ -69,6 +85,11 @@ function renderClickfixHistory(entries) {
   }
 }
 
+function renderVersion() {
+  const manifest = chrome.runtime.getManifest();
+  $version.textContent = `v${manifest.version}`;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -76,13 +97,21 @@ async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
   let hostname = null;
-  try {
-    hostname = tab?.url ? new URL(tab.url).hostname : null;
-  } catch {
-    /* non-url tab (e.g. chrome://) */
+  if (tab?.url) {
+    try {
+      const url = new URL(tab.url);
+      hostname = url.protocol === 'file:' ? url.href : url.hostname;
+    } catch {
+      /* non-url tab (e.g. chrome://) */
+    }
   }
 
-  $hostname.textContent = hostname ?? 'N/A';
+  $hostname.textContent = formatHostname(hostname);
+  if (hostname && hostname.startsWith('file://')) {
+    $hostname.title = hostname;
+  } else {
+    $hostname.removeAttribute('title');
+  }
 
   // Check if this site has a ClickFix detection
   if (hostname) {
@@ -95,6 +124,8 @@ async function init() {
   // ClickFix threat history
   const { history: clickfixHistory } = await send('GET_CLICKFIX_HISTORY');
   renderClickfixHistory(clickfixHistory);
+
+  renderVersion();
 }
 
 init().catch(console.error);

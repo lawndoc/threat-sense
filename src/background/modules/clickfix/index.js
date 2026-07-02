@@ -46,10 +46,25 @@ export const clickfixModule = {
 
     if (result.status !== 'detected') return result;
 
-    await storage.set(MODULE_NAME, hostname, {
+    const existing = await storage.get(MODULE_NAME, hostname);
+    let list = [];
+    if (existing) {
+      list = Array.isArray(existing) ? existing : [existing];
+    }
+
+    const record = {
       ...result,
       hostname,
-    });
+      detectedAt: result.detectedAt || Date.now(),
+    };
+
+    list.push(record);
+
+    if (list.length > 50) {
+      list.shift();
+    }
+
+    await storage.set(MODULE_NAME, hostname, list);
 
     if (this._eventBus) {
       this._eventBus.emit('clickfix:detected', { hostname, tabId, result });
@@ -65,7 +80,10 @@ export const clickfixModule = {
    * @returns {Promise<object|null>}
    */
   async getStatus(hostname) {
-    return storage.get(MODULE_NAME, hostname);
+    const existing = await storage.get(MODULE_NAME, hostname);
+    if (!existing) return null;
+    const list = Array.isArray(existing) ? existing : [existing];
+    return list.length > 0 ? list[list.length - 1] : null;
   },
 
   /**
@@ -73,7 +91,19 @@ export const clickfixModule = {
    * @returns {Promise<Array>}
    */
   async getHistory() {
-    return storage.getAll(MODULE_NAME);
+    const rawHistory = await storage.getAll(MODULE_NAME);
+    const flattened = [];
+    for (const entry of rawHistory) {
+      const detections = Array.isArray(entry.data) ? entry.data : [entry.data];
+      for (const detection of detections) {
+        flattened.push({
+          hostname: entry.hostname,
+          data: detection,
+          ts: detection.detectedAt || entry.ts,
+        });
+      }
+    }
+    return flattened.sort((a, b) => b.ts - a.ts);
   },
 };
 

