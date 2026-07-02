@@ -2,8 +2,7 @@
   "manifest_version": 3,
   "name": "Threat Sense",
   "version": "0.0.0",
-  "description": "Detects ClickFix / ClearFake clipboard-hijack attacks and warns the user before they can paste a malicious command.",
-
+  "description": "Real-time protection against malicious scripts, social engineering, and web-based threats to keep your browsing secure.",
   "permissions": [
     "storage",
     "tabs",
@@ -12,27 +11,34 @@
     "offscreen",
     "clipboardRead"
   ],
-  "host_permissions": ["<all_urls>"],
-
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content/clipboard-interceptor-main.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/clipboard-interceptor-main.js"
+      ],
       "world": "MAIN",
       "run_at": "document_start"
     },
     {
-      "matches": ["<all_urls>"],
-      "js": ["content/clipboard-interceptor-relay.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/clipboard-interceptor-relay.js"
+      ],
       "run_at": "document_start"
     }
   ],
-
   "background": {
     "service_worker": "background/service-worker.js",
     "type": "module"
   },
-
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "Threat Sense",
@@ -42,7 +48,6 @@
       "128": "icons/icon128.png"
     }
   },
-
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
