@@ -153,7 +153,7 @@ jobs:
           fi
           version="${{ steps.version.outputs.new_tag }}"
           clean_version="${version#v}"
-          curl --fail-with-body -H "Authorization: Bearer $ACCESS_TOKEN" -X POST -T "dist/threat-sense-${clean_version}.crx" -v https://chromewebstore.googleapis.com/upload/v2/publishers/94601953-336e-4520-881d-25cf2d240cdb/items/flppehegjoknbjamnimelolgnogloiad:upload
+          curl --fail-with-body -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/x-chrome-extension" -X POST -T "dist/threat-sense-${clean_version}.crx" -v "https://chromewebstore.googleapis.com/upload/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:upload"
           # Does not publish immediately in case of GitHub repo compromise
           # Requires publisher's Google FIDO2 auth to submit publication
         env:
