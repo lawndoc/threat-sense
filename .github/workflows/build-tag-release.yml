@@ -10,7 +10,7 @@ on:
       - README.md
       - tests/**
       - resources/**
-      - .github/workflows/**
+      - .github/workflows/pr-verify.yml
   workflow_dispatch:
 
 permissions:
@@ -153,7 +153,14 @@ jobs:
           fi
           version="${{ steps.version.outputs.new_tag }}"
           clean_version="${version#v}"
-          curl --fail-with-body -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/x-chrome-extension" -X POST -T "dist/threat-sense-${clean_version}.crx" -v "https://chromewebstore.googleapis.com/upload/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:upload"
+          curl --fail-with-body \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/x-chrome-extension" \
+            -H "X-Goog-Upload-Protocol: raw" \
+            -H "X-Goog-Upload-File-Name: threat-sense-${clean_version}.crx" \
+            -X POST \
+            -T "dist/threat-sense-${clean_version}.crx" \
+            -v "https://chromewebstore.googleapis.com/upload/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:upload"
           # Does not publish immediately in case of GitHub repo compromise
           # Requires publisher's Google FIDO2 auth to submit publication
         env:
