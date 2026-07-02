@@ -28,6 +28,20 @@ function timeAgo(ts) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function formatHostname(hostnameOrUrl) {
+  if (!hostnameOrUrl) return 'N/A';
+  if (hostnameOrUrl.startsWith('file://')) {
+    try {
+      const url = new URL(hostnameOrUrl);
+      const filename = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+      return filename ? `file: ${filename}` : 'file: local file';
+    } catch {
+      return hostnameOrUrl;
+    }
+  }
+  return hostnameOrUrl;
+}
+
 // ── Render helpers ────────────────────────────────────────────────────────────
 
 function renderBadge(status) {
@@ -55,7 +69,7 @@ function renderClickfixHistory(entries) {
 
     const name = document.createElement('span');
     name.className = 'history__hostname';
-    name.textContent = entry.hostname;
+    name.textContent = formatHostname(entry.hostname);
     name.title = entry.hostname;
 
     const label = document.createElement('span');
@@ -83,13 +97,21 @@ async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
   let hostname = null;
-  try {
-    hostname = tab?.url ? new URL(tab.url).hostname : null;
-  } catch {
-    /* non-url tab (e.g. chrome://) */
+  if (tab?.url) {
+    try {
+      const url = new URL(tab.url);
+      hostname = url.protocol === 'file:' ? url.href : url.hostname;
+    } catch {
+      /* non-url tab (e.g. chrome://) */
+    }
   }
 
-  $hostname.textContent = hostname ?? 'N/A';
+  $hostname.textContent = formatHostname(hostname);
+  if (hostname && hostname.startsWith('file://')) {
+    $hostname.title = hostname;
+  } else {
+    $hostname.removeAttribute('title');
+  }
 
   // Check if this site has a ClickFix detection
   if (hostname) {

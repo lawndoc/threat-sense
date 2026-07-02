@@ -51,7 +51,12 @@ async function handleMessage(message, sender) {
       if (!tab?.id) return { ok: false, reason: 'no active tab' };
 
       let hostname = 'unknown';
-      try { hostname = new URL(tab.url).hostname; } catch { /* non-url tab */ }
+      try {
+        const url = new URL(tab.url);
+        hostname = url.protocol === 'file:' ? url.href : url.hostname;
+      } catch {
+        /* non-url tab */
+      }
 
       const result = await clickfixModule.onClipboardChange(text, tab.id, hostname);
       if (result?.status === 'detected') {

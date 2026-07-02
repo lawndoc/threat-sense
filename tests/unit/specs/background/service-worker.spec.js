@@ -152,6 +152,33 @@ describe('service-worker message routing', () => {
     expect(sendResponse).toHaveBeenCalledWith({ ok: true, source: 'relay' });
   });
 
+  test('extracts full URL as hostname for file:// protocol links', async () => {
+    const { onMessageListener, clickfixModule } = await setupServiceWorker({
+      onClipboardResult: {
+        status: 'detected',
+        snippet: 'powershell -enc AAAABBBB',
+      },
+    });
+
+    await invokeMessage(
+      onMessageListener,
+      {
+        type: 'CLIPBOARD_CHANGED',
+        text: 'powershell -enc AAAABBBB',
+        source: 'relay',
+      },
+      {
+        tab: { id: 43, url: 'file:///home/user/document.html' },
+      }
+    );
+
+    expect(clickfixModule.onClipboardChange).toHaveBeenCalledWith(
+      'powershell -enc AAAABBBB',
+      43,
+      'file:///home/user/document.html'
+    );
+  });
+
   test('does not inject warning overlay for non-detected clipboard payloads', async () => {
     const { onMessageListener, chrome } = await setupServiceWorker({
       onClipboardResult: { status: 'not-detected' },
