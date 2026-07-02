@@ -38,6 +38,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true; // keep channel open for async response
 });
 
+// ── Tab state listeners for badge updates ─────────────────────────────────────
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (chrome.runtime.lastError || !tab) return;
+    updateBadgeForTab(tab.id, tab.url).catch((err) => {
+      console.error('[Threat Sense] Failed to update badge on tab activation:', err);
+    });
+  });
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' || changeInfo.url) {
+    updateBadgeForTab(tabId, tab.url).catch((err) => {
+      console.error('[Threat Sense] Failed to update badge on tab update:', err);
+    });
+  }
+});
+
 /**
  * Route messages from the popup, content scripts, and offscreen document.
  * @param {{ type: string, payload?: * }} message
@@ -61,6 +80,9 @@ async function handleMessage(message, sender) {
       const result = await clickfixModule.onClipboardChange(text, tab.id, hostname);
       if (result?.status === 'detected') {
         await injectWarningOverlay(tab.id, result.snippet ?? '');
+        await updateBadgeForTab(tab.id, tab.url).catch((err) => {
+          console.error('[Threat Sense] Failed to update badge on detection:', err);
+        });
       }
       return { ok: true, source };
     }
@@ -108,4 +130,28 @@ async function injectWarningOverlay(tabId, snippet) {
     // Tab may be a privileged page (chrome://, PDF, etc.) where scripting is blocked.
     console.warn('[ClickFix] Could not inject warning overlay into tab', tabId, '—', err.message);
   }
+}
+
+async function updateBadgeForTab(tabId, urlString) {
+  if (!tabId) return;
+  let hostname = null;
+  if (urlString) {
+    try {
+      const url = new URL(urlString);
+      hostname = url.protocol === 'file:' ? url.href : url.hostname;
+    } catch {
+      // non-url tab
+    }
+  }
+
+  if (hostname) {
+    const status = await clickfixModule.getStatus(hostname);
+    if (status) {
+      await chrome.action.setBadgeText({ text: '!', tabId });
+      await chrome.action.setBadgeBackgroundColor({ color: '#FF0000', tabId });
+      return;
+    }
+  }
+  // Clear the badge for this tab
+  await chrome.action.setBadgeText({ text: '', tabId });
 }
